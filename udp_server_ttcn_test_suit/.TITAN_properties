@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?><TITAN_Designer_Properties>
+  <ActiveConfiguration>Default</ActiveConfiguration>
+  <ProjectProperties>
+    <MakefileSettings>
+      <targetExecutable>bin/udp_server_ttcn_test_suit</targetExecutable>
+    </MakefileSettings>
+    <LocalBuildSettings>
+      <MakefileScript/>
+      <workingDirectory>bin</workingDirectory>
+    </LocalBuildSettings>
+  </ProjectProperties>
+</TITAN_Designer_Properties>

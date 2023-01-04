@@ -1,0 +1,190 @@
+module udp_server_test_suit {
+
+type port PCOType message
+{
+  inout charstring;
+}
+
+type component MTCType
+{
+  port PCOType MyPCO_PT;
+}
+
+testcase tc_Led_ControlCmd(integer LedNumber, charstring cmd) runs on MTCType system MTCType
+{
+  log(">>>> Test case tc_Led_ControlCmd(", LedNumber, ", ", cmd, ") is running...");
+
+  timer TL_T := 15.0;
+  map(mtc:MyPCO_PT, system:MyPCO_PT);
+  var charstring request := "led" & int2str(LedNumber) & " " & cmd;
+  MyPCO_PT.send(request);
+  TL_T.start;
+  
+  if (LedNumber > 2 and LedNumber < 7 and (cmd == "on" or cmd == "off" or cmd == "toggle" ) )
+  {
+    alt {
+      [] MyPCO_PT.receive("OK\r\n") { TL_T.stop; setverdict(pass); }
+      [] TL_T.timeout { setverdict(inconc); }
+      [] MyPCO_PT.receive { TL_T.stop; setverdict(fail); }
+    }
+  }
+  else
+  {
+    alt {
+      [] MyPCO_PT.receive("ERROR\r\n") { TL_T.stop; setverdict(pass); }
+      [] TL_T.timeout { setverdict(inconc); }
+      [] MyPCO_PT.receive { TL_T.stop; setverdict(fail); }
+    }
+  }
+}
+
+testcase tc_Led_StatusCmd(integer LedNumber, charstring cmd) runs on MTCType system MTCType
+{
+  log(">>>> Test case tc_Led_StatusCmd(", LedNumber, ", ", cmd, ") is running...");
+
+  timer TL_T := 15.0;
+  map(mtc:MyPCO_PT, system:MyPCO_PT);
+  var charstring request;
+  var charstring answer;
+  
+  if (cmd == "on" or cmd == "toggle")
+  {
+	  request := "led" & int2str(LedNumber) & " on";
+  	  answer := "LED" & int2str(LedNumber) & " ON\r\n";    
+  }
+  else if (cmd == "off")
+  {
+	  request := "led" & int2str(LedNumber) & " off";
+  	  answer := "LED" & int2str(LedNumber) & " OFF\r\n";    
+  }
+  else { setverdict(inconc); }
+ 
+  MyPCO_PT.send(request);
+  TL_T.start;
+
+  if (LedNumber > 2 and LedNumber < 7)
+  {
+    alt {
+      [] MyPCO_PT.receive("OK\r\n") {
+         	TL_T.stop;
+         	
+         	if (cmd == "on" or cmd == "off")
+         	{
+         	  // we sent appropriate command and we clearly know which status should be
+             	request := "led" & int2str(LedNumber) & " status";
+             	MyPCO_PT.send(request);
+        		TL_T.start;
+        		alt {
+        		   [] MyPCO_PT.receive(answer) {
+      				TL_T.stop; setverdict(pass);  
+        		   }
+        		   [] TL_T.timeout { setverdict(inconc); }
+         		   [] MyPCO_PT.receive { TL_T.stop; setverdict(fail); }
+        		}     	  
+         	}
+         	else //toggle         	 
+         	{
+         	  	// we sent "on" first, now we are sending "toggle" and we are expecting to get "status" equals "OFF"
+         	    request := "led" & int2str(LedNumber) & " toggle";
+             	MyPCO_PT.send(request);
+        		TL_T.start;
+           		alt {
+        		   [] MyPCO_PT.receive("OK\r\n") {
+        		     	TL_T.stop;
+      					
+      					request := "led" & int2str(LedNumber) & " status";
+      					answer := "LED" & int2str(LedNumber) & " OFF\r\n";
+             			MyPCO_PT.send(request);
+        				TL_T.start;      					
+                		alt {
+                		   [] MyPCO_PT.receive(answer) {
+              					TL_T.stop; setverdict(pass);  
+                		   }
+                		   [] TL_T.timeout { setverdict(inconc); }
+                 		   [] MyPCO_PT.receive { TL_T.stop; setverdict(fail); }
+                		}   
+        		   }
+        		   [] TL_T.timeout { setverdict(inconc); }
+         		   [] MyPCO_PT.receive { TL_T.stop; setverdict(fail); }
+        		}
+         	}
+       	}
+      [] TL_T.timeout { setverdict(inconc); }
+      [] MyPCO_PT.receive { TL_T.stop; setverdict(fail); }
+    }    
+  }
+  else
+  {
+    alt {
+      [] MyPCO_PT.receive("ERROR\r\n") { TL_T.stop; setverdict(pass); }
+      [] TL_T.timeout { setverdict(inconc); }
+      [] MyPCO_PT.receive { TL_T.stop; setverdict(fail); }
+    }
+  }
+}
+
+testcase tc_CheckServerVersion(charstring cmd) runs on MTCType system MTCType
+{
+  log(">>>> Test case tc_CheckServerVersion(", cmd, ") is running...");
+
+  timer TL_T := 15.0;
+  map(mtc:MyPCO_PT, system:MyPCO_PT);
+  var charstring request := cmd;
+  var charstring answer := "test_server\r\n";
+  MyPCO_PT.send(request);
+  TL_T.start;
+
+  if (cmd == "sversion")
+  {
+    alt {
+      [] MyPCO_PT.receive(answer) { TL_T.stop; setverdict(fail); }
+      [] TL_T.timeout { setverdict(inconc); }
+      [] MyPCO_PT.receive { TL_T.stop; setverdict(pass); }
+    }
+  }
+  else
+  {
+    alt {
+      [] MyPCO_PT.receive("ERROR\r\n") { TL_T.stop; setverdict(pass); }
+      [] TL_T.timeout { setverdict(inconc); }
+      [] MyPCO_PT.receive { TL_T.stop; setverdict(fail); }
+    }
+  }
+}
+
+control
+{
+  execute(tc_Led_ControlCmd(1, "toggle"));
+  execute(tc_Led_ControlCmd(2, "on"));
+  execute(tc_Led_ControlCmd(3, "unknown"));
+  execute(tc_Led_ControlCmd(3, "on"));
+  execute(tc_Led_ControlCmd(3, "off"));
+  execute(tc_Led_ControlCmd(3, "toggle"));
+  execute(tc_Led_ControlCmd(4, "on"));
+  execute(tc_Led_ControlCmd(4, "off"));
+  execute(tc_Led_ControlCmd(4, "toggle"));
+  execute(tc_Led_ControlCmd(5, "on"));
+  execute(tc_Led_ControlCmd(5, "off"));
+  execute(tc_Led_ControlCmd(5, "toggle"));
+  execute(tc_Led_ControlCmd(6, "on"));
+  execute(tc_Led_ControlCmd(6, "off"));
+  execute(tc_Led_ControlCmd(6, "toggle"));
+  execute(tc_Led_ControlCmd(7, "on"));
+  execute(tc_Led_StatusCmd(3, "on"));
+  execute(tc_Led_StatusCmd(3, "off"));
+  execute(tc_Led_StatusCmd(3, "toggle"));
+  execute(tc_Led_StatusCmd(4, "on"));
+  execute(tc_Led_StatusCmd(4, "off"));
+  execute(tc_Led_StatusCmd(4, "toggle"));
+  execute(tc_Led_StatusCmd(5, "on"));
+  execute(tc_Led_StatusCmd(5, "off"));
+  execute(tc_Led_StatusCmd(5, "toggle"));
+  execute(tc_Led_StatusCmd(6, "on"));
+  execute(tc_Led_StatusCmd(6, "off"));
+  execute(tc_Led_StatusCmd(6, "toggle"));
+  execute(tc_Led_StatusCmd(7, "toggle"));
+  execute(tc_Led_StatusCmd(-11, "off"));
+  execute(tc_CheckServerVersion("sversion"));
+}
+
+}
