@@ -2,6 +2,8 @@
   <ActiveConfiguration>Default</ActiveConfiguration>
   <ProjectProperties>
     <MakefileSettings>
+      <GNUMake>true</GNUMake>
+      <incrementalDependencyRefresh>true</incrementalDependencyRefresh>
       <targetExecutable>bin/udp_server_ttcn_test_suit</targetExecutable>
     </MakefileSettings>
     <LocalBuildSettings>

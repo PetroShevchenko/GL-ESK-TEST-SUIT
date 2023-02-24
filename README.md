@@ -226,3 +226,12 @@ The first line in the example above should contain student's first and last name
 ~~~
 MTC@DellVostro: Message enqueued on MyPCO_PT from system charstring : "udp_srv_petro_shevchenko_23022023" id 1
 ~~~
+
+8.3. Run udp_server_ttcn_test_suit from the Linux terminal
+
+a) Start the implemented or test udp server as described above
+
+b) Open the Linux terminal and launch udp_server_ttcn_test_suit:
+~~~
+user@host:~$ ttcn3_start $HOME/GL-ESK-TEST-SUIT/udp_server_ttcn_test_suit/bin/udp_server_ttcn_test_suit $HOME/GL-ESK-TEST-SUIT/udp_server_ttcn_test_suit/src/udp_server_test_suit.cfg udp_server_test_suit
+~~~

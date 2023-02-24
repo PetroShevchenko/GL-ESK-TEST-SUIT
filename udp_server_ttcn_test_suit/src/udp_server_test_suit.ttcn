@@ -130,16 +130,28 @@ testcase tc_CheckServerVersion(charstring cmd) runs on MTCType system MTCType
   timer TL_T := 15.0;
   map(mtc:MyPCO_PT, system:MyPCO_PT);
   var charstring request := cmd;
-  var charstring answer := "test_server\r\n";
+  var charstring answer;
   MyPCO_PT.send(request);
   TL_T.start;
 
   if (cmd == "sversion")
   {
     alt {
-      [] MyPCO_PT.receive(answer) { TL_T.stop; setverdict(fail); }
+      [] MyPCO_PT.receive(charstring : ?)  -> value answer
+      {
+        var charstring tmp := regexp(answer, charstring : "(udp_srv_)?+", 0);
+        TL_T.stop;
+        if(tmp == "udp_srv_")
+        {
+          setverdict(pass);
+        }
+        else
+        {
+          setverdict(fail);
+        }
+      }
       [] TL_T.timeout { setverdict(inconc); }
-      [] MyPCO_PT.receive { TL_T.stop; setverdict(pass); }
+      [] MyPCO_PT.receive { TL_T.stop; setverdict(fail); }
     }
   }
   else
