@@ -115,6 +115,10 @@ g++  -o udp_server_ttcn_test_suit udp_server_test_suit.o PCOType.o udp_client.o 
 Operation finished successfully.
 ~~~
 
+***Note:*** If the compilation fails, check if you have selected "Generate the makefile using the Eclipse internal Makefile generator" checkbox in "Project->Properties->TITAN Project Property(C++)" window. If so, clear this checkbox.
+
+![plot](images/titan_project_property.png)
+
 8. Run udp_server_ttcn_test_suit
 
 8.1. Run udp_server_ttcn_test_suit with the test udp server
